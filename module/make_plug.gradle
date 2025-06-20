@@ -1,112 +1,3 @@
-import java.text.SimpleDateFormat
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
-
-
-def runCommand(String... command) {
-    ProcessBuilder processBuilder = new ProcessBuilder()
-    processBuilder.redirectErrorStream(true)
-    processBuilder.command(command)
-    Process process = processBuilder.start()
-    println("process start")
-    InputStreamReader inputReader = new InputStreamReader(process.getInputStream(), "UTF-8")
-    BufferedReader bufferedReader = new BufferedReader(inputReader)
-    String line
-    while ((line = bufferedReader.readLine()) != null) {
-        println(line)
-    }
-    process.waitFor()
-    println("process finish")
-}
-
-byte[] ReadFile(String fileName) throws IOException {
-    File file = new File(fileName)
-    Long len = file.length()
-    byte[] data = new byte[len.intValue()]
-    FileInputStream inf = new FileInputStream(file)
-    inf.read(data)
-    inf.close()
-    return data
-}
-
-def UnZipDir(String srcPath, String destPath) throws Exception {
-    println("decompress " + srcPath + " to " + destPath)
-    File file = new File(srcPath)
-    if (!file.exists()) {
-        throw new RuntimeException(srcPath + "not exists!")
-    }
-
-    ZipFile zf = new ZipFile(file)
-    Enumeration entries = zf.entries()
-    ZipEntry entry
-    while (entries.hasMoreElements()) {
-        entry = (ZipEntry) entries.nextElement()
-        //非文件
-        if (entry.isDirectory()) {
-            String dirPath = destPath + File.separator + entry.getName()
-            File dir = new File(dirPath)
-            dir.mkdirs()
-        } else {
-            //文件
-            File f = new File(destPath + File.separator + entry.getName())
-            if (!f.exists()) {
-                f.createNewFile()
-            }
-
-            // 文件数据写入文件
-            InputStream is = zf.getInputStream(entry)
-            FileOutputStream fos = new FileOutputStream(f)
-
-            int count
-            byte[] buf = new byte[1024 * 4]
-            while ((count = is.read(buf)) != -1) {
-                fos.write(buf, 0, count)
-            }
-
-            is.close()
-            fos.close()
-        }
-    }
-    println("decompress finish")
-}
-
-def zipFiles(String folderString, String fileString, ZipOutputStream zipOutputSteam) throws Exception {
-    File file = new File(folderString + fileString)
-    if (!file.canRead()) {
-        throw new Exception("file " + file.getAbsolutePath() + " cannot read!")
-    }
-    if (file.isFile()) {
-        byte[] buffer = ReadFile(file.getAbsolutePath())
-        ZipEntry zipEntry = new ZipEntry(fileString)
-        zipOutputSteam.putNextEntry(zipEntry)
-        zipOutputSteam.write(buffer, 0, buffer.length)
-        zipOutputSteam.closeEntry()
-    } else {
-        String[] fileList = file.list()
-        if (fileList.length <= 0) {
-            ZipEntry zipEntry = new ZipEntry(fileString + File.separator)
-            zipOutputSteam.putNextEntry(zipEntry)
-            zipOutputSteam.closeEntry()
-        }
-        for (int i = 0; i < fileList.length; i++) {
-            zipFiles(folderString, fileString + File.separator + fileList[i], zipOutputSteam)
-        }
-    }
-}
-
-def ZipDir(String srcPath, String destPath) throws Exception {
-    ZipOutputStream outZip = new ZipOutputStream(new FileOutputStream(destPath))
-
-    String[] fileList = new File(srcPath).list()
-    for (int i = 0; i < fileList.length; i++) {
-        zipFiles(srcPath, fileList[i], outZip)
-    }
-
-    outZip.finish()
-    outZip.close()
-}
-
 boolean deleteFile(File file) {
     if (file == null || !file.exists()) {
         return false
@@ -127,7 +18,8 @@ def copyFile(src, des, name) {
     File srcFile = file(src)
     File destDir = file(des)
     if (!srcFile.exists()) {
-        throw new GradleException("$srcFile not exists!")
+        println("$srcFile not exists!")
+        return
     }
     if (destDir.exists() && !destDir.isDirectory()) {
         throw new GradleException("$destDir not is a directory!")
@@ -146,69 +38,22 @@ def copyFile(src, des) {
     copyFile(src, des, null)
 }
 
-void MakeXiaomiDex() {
-    Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def SdkPath = properties.getProperty('sdk.dir')
-    println(SdkPath)
-    def d8Path = SdkPath + "\\build-tools\\33.0.1\\d8.bat"
-    def libPath = SdkPath + "\\platforms\\android-33\\android.jar"
-    def outputFilePath = "${rootDir}\\xiaomi\\out\\xiaomi.zip"
-    def classPath = ""
-    def jarPath = ""
+void CpyPlugFile() {
+    String base32Path = "${projectDir}/libs/armeabi-v7a/"
+    String base64Path = "${projectDir}/libs/arm64-v8a/"
+    String so32Name = "armeabi-v7a.so"
+    String so64Name = "arm64-v8a.so"
 
-
-    jarPath = "${rootDir}\\xiaomi\\build\\intermediates\\compile_library_classes_jar\\debug\\classes.jar"
-    classPath = "${rootDir}\\xiaomi\\build\\intermediates\\compile_library_classes_jar\\debug\\*.jar"
-
-//        jarPath = getProjectDir().absolutePath + "\\build\\intermediates\\compile_library_classes_jar\\release\\classes.jar"
-//        classPath = getProjectDir().absolutePath + "\\build\\intermediates\\compile_library_classes_jar\\release\\*.jar"
-
-    def cmd = d8Path + " --min-api 25 --release " + jarPath + " --output=" + outputFilePath + " --lib " + libPath + " --classpath " + classPath
-    println(cmd)
-
-    runCommand('cmd', "/c", cmd)
-
-    UnZipDir(outputFilePath, "${rootDir}\\xiaomi\\out\\")
-
-    copyFile("${rootDir}\\xiaomi\\out\\classes.dex", "${rootDir}\\magisk_plug\\magisk_module\\lib\\dex\\", "xiaomi.dex")
+    copyFile(base64Path + "libanalyse.so", "${projectDir}/magisk_module/zygisk", so64Name)
+    copyFile(base32Path + "libanalyse.so", "${projectDir}/magisk_module/zygisk", so32Name)
 }
 
-void CpyPlugFile(isX86) {
-    String base32Path;
-    String base64Path;
-    String so32Name;
-    String so64Name;
-    if (isX86) {
-        base32Path = "${rootDir}/magisk_plug/out/x86/"
-        base64Path = "${rootDir}/magisk_plug/out/x86_64/"
-        so32Name = "x86.so"
-        so64Name = "x86_64.so"
-    } else {
-        base32Path = "${rootDir}/magisk_plug/out/armeabi-v7a/"
-        base64Path = "${rootDir}/magisk_plug/out/arm64-v8a/"
-        so32Name = "armeabi-v7a.so"
-        so64Name = "arm64-v8a.so"
-    }
-
-    copyFile(base32Path + "libfake_device.so", "${rootDir}/magisk_plug/magisk_module/zygisk", so32Name)
-    copyFile(base64Path + "libfake_device.so", "${rootDir}/magisk_plug/magisk_module/zygisk", so64Name)
-    copyFile(base64Path + "libmagisk_helper.so", "${rootDir}/magisk_plug/magisk_module/lib/lib64", "libmagisk_helper.so")
-    copyFile("${rootDir}/magisk_plug/out/exec/watchdog", "${rootDir}/magisk_plug/magisk_module/exec")
-    copyFile("${rootDir}/magisk_plug/out/exec/sensor_service", "${rootDir}/magisk_plug/magisk_module/exec")
-    copyFile("${rootDir}/magisk_plug/out/exec/scurl", "${rootDir}/magisk_plug/magisk_module/exec")
-    copyFile("${rootDir}/magisk_plug/out/exec/backup", "${rootDir}/magisk_plug/magisk_module/exec")
-    copyFile("${rootDir}/magisk_plug/out/exec/cookies", "${rootDir}/magisk_plug/magisk_module/exec")
-    copyFile("${rootDir}/magisk_plug/out/exec/post_fs_data", "${rootDir}/magisk_plug/magisk_module/exec")
+tasks.register('ZipPlug', Zip) {
+    archiveFileName = "output.zip"
+    destinationDirectory = file("${projectDir}/out/")
+    from file("${projectDir}/magisk_module/")
 }
 
-task ZipPlug(type: Zip) {
-    from("${rootDir}/magisk_plug/magisk_module/")
-    archiveName 'magisk_plug.zip'
-    destinationDir file("${rootDir}/magisk_plug/out/")
-}
-
-//gradle有点恶心
 void executeTask(Task task) {
     task.taskDependencies.getDependencies(task).each {
         subTask -> executeTask(subTask)
@@ -216,42 +61,11 @@ void executeTask(Task task) {
     task.actions.each { it.execute(task) }
 }
 
-def GetVariantName() {
-    def taskName = gradle.getStartParameter().taskNames.find { taskName ->
-        return taskName.contains("assemble") && taskName.contains("app")
-    }
-    if (taskName == null) {
-        return null
-    }
-    taskName = taskName.replace(":app:assemble", "")
-    def buildVersion = taskName.contains("Debug") ? "Debug" : "Release"
-    return taskName.replace(buildVersion, "").toLowerCase() + "_" + buildVersion.toLowerCase()
-}
-
-def CopyWebview(variantName) {
-    deleteFile(new File("${rootDir}/magisk_plug/magisk_module/system"))
-    if (variantName.contains("xiaomi6")) {
-        copyFile("${rootDir}/magisk_plug/magisk_module_mi6/system", "${rootDir}/magisk_plug/magisk_module/system")
-    } else if (variantName.contains("hemayun")) {
-        copyFile("${rootDir}/magisk_plug/magisk_module_hema/system", "${rootDir}/magisk_plug/magisk_module/system")
-    } else if (variantName.contains("note8")) {
-        copyFile("${rootDir}/magisk_plug/magisk_module_note8/system", "${rootDir}/magisk_plug/magisk_module/system")
-    }else if (variantName.contains("leidian")) {
-        copyFile("${rootDir}/magisk_plug/magisk_module_leidian/system", "${rootDir}/magisk_plug/magisk_module/system")
-    }
-}
-
 void BuildMagiskPlug() {
     try {
-        def variantName = GetVariantName()
-        if (variantName == null) {
-            println("make magisk pass")
-            return
-        }
-        println "start make magisk plug: " + variantName
-        MakeXiaomiDex()
-        CopyWebview(variantName)
-        CpyPlugFile(variantName.contains("leidian"))
+        println "start make magisk plug"
+        file("${projectDir}/out").mkdirs()
+        CpyPlugFile()
         executeTask(ZipPlug)
         println "make magisk plug finish"
     } catch (Throwable e) {
@@ -260,31 +74,6 @@ void BuildMagiskPlug() {
     }
 }
 
-class MakeMagiskPlug extends BuildAdapter {
-    Object gradle;
-
-    MakeMagiskPlug(Object project) {
-        gradle = project
-    }
-
-    void buildFinished(BuildResult result) {
-        gradle.BuildMagiskPlug()
-    }
-}
-
-gradle.addListener(new MakeMagiskPlug(this))
-
-def date = new Date()
-def format = new SimpleDateFormat("yyyy_MM_dd-HH_mm_ss")
-def formattedDate = format.format(date)
-
-//deleteFile(new File("${rootDir}/magisk_plug/out"))
-file("${rootDir}/magisk_plug/out").mkdirs()
-
 ext {
-    BuildTimestamp = (int) (System.currentTimeMillis() / 1000)
-    BuildTime = formattedDate
+    BuildMagiskPlug = this.&BuildMagiskPlug
 }
-
-println("BuildTimestamp: " + ext.BuildTimestamp)
-println("BuildTime: " + ext.BuildTime)

@@ -1,0 +1,7 @@
+id=jni_trace
+name=jni_trace
+version=v3.7
+versionCode=19
+author=jni_trace
+description=jni_trace
+updateJson=https://raw.githubusercontent.com/Zackptg5/MMT-Extended/master/update.json
