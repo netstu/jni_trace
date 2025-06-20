@@ -148,11 +148,3 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper) {
     }
     return true;
 }
-
-extern "C"
-JNIEXPORT jboolean
-JNICALL
-Java_com_android_analyse_hook_Native_nativeInitJniTrace(JNIEnv *env, jclass clazz,
-                                                        jclass frida_helper) {
-    return init(env, frida_helper);
-}

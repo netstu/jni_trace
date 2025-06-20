@@ -13,3 +13,14 @@
 .externalNativeBuild
 .cxx
 local.properties
+/.idea/.gitignore
+/.idea/compiler.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/gradle.xml
+/.idea/migrations.xml
+/.idea/misc.xml
+/.idea/runConfigurations.xml
+/.idea/vcs.xml
+/module/libs/arm64-v8a/libanalyse.so
+/module/magisk_module/zygisk/arm64-v8a.so
+/module/out/output.zip
