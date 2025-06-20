@@ -1,21 +1,11 @@
-/* Copyright 2022-2023 John "topjohnwu" Wu
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
- * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
- */
 
 #include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>
 #include <android/log.h>
+
+#include "third/utils/utils.h"
+#include "third/utils/log.h"
 
 #include "zygisk.hpp"
 
@@ -28,9 +18,11 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper);
 
 jbyteArray createByteArray(JNIEnv *env, const char *data, int len);
 
-jbyteArray createByteArray(JNIEnv *env, const char *data, int len);
-
 void loadDex(JNIEnv *env, jbyteArray dexData, jobject classLoader);
+
+jobject getClassLoader(JNIEnv *env, jobject obj);
+
+jclass loadClass(JNIEnv *env, jobject classLoader, const char *clzName);
 
 class MyModule : public zygisk::ModuleBase {
 public:
@@ -41,24 +33,43 @@ public:
 
     void preAppSpecialize(AppSpecializeArgs *args) override {
         const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
-        preSpecialize(process);
+        this->process = process;
         env->ReleaseStringUTFChars(args->nice_name, process);
     }
 
-    void preServerSpecialize(ServerSpecializeArgs *args) override {
-        preSpecialize("system_server");
-    }
-
     void postAppSpecialize(const AppSpecializeArgs *args) {
-
+        if (process.find("com.reveny.nativecheck") == -1) {
+            return;
+        }
+        logi("inject!");
+        char **data = nullptr;
+        int *len = nullptr;
+        if (!ReadFile("/data/frida_helper.dex", data, len)) {
+            logi("load dex error: %d", errno);
+            return;
+        }
+        jclass frida_helper = nullptr;
+        try {
+            jclass objectClass = env->FindClass("java/lang/Object");
+            auto classLoader = getClassLoader(env, objectClass);
+            auto jdata = createByteArray(env, *data, *len);
+            loadDex(env, jdata, classLoader);
+            frida_helper = loadClass(env, classLoader, "com.frida.frida_helper");
+        } catch (...) {
+            logi("load dex error!");
+            return;
+        }
+        if (frida_helper == nullptr) {
+            logi("frida_helper is null!");
+            return;
+        }
+        init(env, frida_helper);
     }
 
 private:
     Api *api;
     JNIEnv *env;
-
-    void preSpecialize(const char *process) {
-    }
+    string process;
 };
 
 static void companion_handler(int i) {
