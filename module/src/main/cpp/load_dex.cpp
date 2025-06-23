@@ -7,17 +7,18 @@
 
 #define CheckJni    if (env->ExceptionCheck()) { \
   env->ExceptionDescribe();                      \
-  throw 0;}
+  return false;}
+#define CheckJni    if (env->ExceptionCheck()) { \
+  env->ExceptionDescribe();                      \
+  return false;}
 
 jbyteArray createByteArray(JNIEnv *env, const char *data, int len) {
     jbyteArray result = env->NewByteArray(len);
-    CheckJni
     env->SetByteArrayRegion(result, 0, len, (const jbyte *) data);
-    CheckJni
     return result;
 }
 
-void loadDex(JNIEnv *env, jbyteArray dexData, jobject classLoader) {
+bool loadDex(JNIEnv *env, jbyteArray dexData, jobject classLoader) {
     jclass elementClass = env->FindClass("dalvik/system/DexPathList$Element");
     CheckJni
     jclass dexFileClass = env->FindClass("dalvik/system/DexFile");
@@ -63,54 +64,46 @@ void loadDex(JNIEnv *env, jbyteArray dexData, jobject classLoader) {
     CheckJni
     for (jsize i = 0; i < dexElementsLength; i++) {
         jobject element = env->GetObjectArrayElement(dexElements, i);
-        CheckJni
         env->SetObjectArrayElement(newElements, i + 1, element);
-        CheckJni
     }
     env->SetObjectArrayElement(newElements, 0, dexElement);
     CheckJni
     env->SetObjectField(pathList, dexElementsField, newElements);
     CheckJni
+    return true;
 }
 
 jobject getClassLoader(JNIEnv *env, jobject obj) {
     jclass objClass = env->GetObjectClass(obj);
-    CheckJni
     if (objClass == nullptr) {
         return nullptr;
     }
     jmethodID getClassLoaderMethod = env->GetMethodID(objClass, "getClassLoader",
                                                       "()Ljava/lang/ClassLoader;");
-    CheckJni
     if (getClassLoaderMethod == nullptr) {
         return nullptr;
     }
     auto result = env->CallObjectMethod(obj, getClassLoaderMethod);
-    CheckJni
     return result;
 }
 
 jobject getApplicationRef(JNIEnv *env) {
-    jclass activityThreadClass = env->FindClass(("android/app/ActivityThread");
-    CheckJni
+    jclass activityThreadClass = env->FindClass("android/app/ActivityThread");
     if (activityThreadClass == nullptr) {
         return nullptr;
     }
     jmethodID currentApplicationMethod = env->GetStaticMethodID(activityThreadClass,
                                                                 "currentApplication",
                                                                 "()Landroid/app/Application;");
-    CheckJni
     if (currentApplicationMethod == nullptr) {
         return nullptr;
     }
     jobject application = env->CallStaticObjectMethod(activityThreadClass,
                                                       currentApplicationMethod);
-    CheckJni
     if (application == nullptr) {
         return nullptr;
     }
     jobject context = env->NewGlobalRef(application);
-    CheckJni
     return context;
 }
 

@@ -18,7 +18,7 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper);
 
 jbyteArray createByteArray(JNIEnv *env, const char *data, int len);
 
-void loadDex(JNIEnv *env, jbyteArray dexData, jobject classLoader);
+bool loadDex(JNIEnv *env, jbyteArray dexData, jobject classLoader);
 
 jobject getClassLoader(JNIEnv *env, jobject obj);
 
@@ -48,22 +48,23 @@ public:
             logi("load dex error: %d", errno);
             return;
         }
-        jclass frida_helper = nullptr;
-        try {
-            jclass objectClass = env->FindClass("java/lang/Object");
-            auto classLoader = getClassLoader(env, objectClass);
-            auto jdata = createByteArray(env, *data, *len);
-            loadDex(env, jdata, classLoader);
-            frida_helper = loadClass(env, classLoader, "com.frida.frida_helper");
-        } catch (...) {
+        logi("will load dex");
+
+        jclass objectClass = env->FindClass("java/lang/Object");
+        auto classLoader = getClassLoader(env, objectClass);
+        auto jdata = createByteArray(env, *data, *len);
+        if (!loadDex(env, jdata, classLoader)) {
             logi("load dex error!");
             return;
         }
+        jclass frida_helper = loadClass(env, classLoader, "com.frida.frida_helper");
         if (frida_helper == nullptr) {
             logi("frida_helper is null!");
             return;
         }
+        logi("will init jni trace");
         init(env, frida_helper);
+        logi("finish");
     }
 
 private:
