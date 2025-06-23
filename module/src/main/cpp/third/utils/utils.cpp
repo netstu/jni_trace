@@ -279,14 +279,11 @@ bool ReadFile(const string &path, char **data, int *len) {
         loge("read file %s no read permission", path.c_str());
         return false;
     }
-    logi("ttttt 1");
     std::ifstream ifs(path, std::ios::binary);
-    logi("ttttt 2");
     if (!ifs.is_open()) {
         loge("read file %s open failed", path.c_str());
         return false;
     }
-    logi("ttttt 3");
     ifs.seekg(0, ifs.end);
     auto fos = ifs.tellg();
     ifs.seekg(0, ifs.beg);
