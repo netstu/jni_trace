@@ -24,6 +24,8 @@ jobject getClassLoader(JNIEnv *env, jobject obj);
 
 jclass loadClass(JNIEnv *env, jobject classLoader, const char *clzName);
 
+jobject loadDexFromMemory(JNIEnv *env, char *dexData, int dexLen);
+
 class MyModule : public zygisk::ModuleBase {
 public:
     void onLoad(Api *api, JNIEnv *env) override {
@@ -38,22 +40,20 @@ public:
     }
 
     void postAppSpecialize(const AppSpecializeArgs *args) {
-        if (process.find("com.reveny.nativecheck") == -1) {
+        if (process.find("com.reveny.nativecheck") == -1 &&
+            process.find("com.org.tuokuan") == -1) {
             return;
         }
         logi("inject!");
-        char **data = nullptr;
-        int *len = nullptr;
-        if (!ReadFile("/data/frida_helper.dex", data, len)) {
+        char *data = nullptr;
+        int len;
+        if (!ReadFile("/data/frida_helper.dex", &data, &len)) {
             logi("load dex error: %d", errno);
             return;
         }
         logi("will load dex");
-
-        jclass objectClass = env->FindClass("java/lang/Object");
-        auto classLoader = getClassLoader(env, objectClass);
-        auto jdata = createByteArray(env, *data, *len);
-        if (!loadDex(env, jdata, classLoader)) {
+        auto classLoader = loadDexFromMemory(env, data, len);
+        if (classLoader == nullptr) {
             logi("load dex error!");
             return;
         }

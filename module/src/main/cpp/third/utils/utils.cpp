@@ -14,6 +14,7 @@
 
 #include "utils.h"
 #include "linux_helper.h"
+#include "log.h"
 
 using std::stringstream;
 
@@ -275,14 +276,17 @@ string to_upper(const string &str) {
 
 bool ReadFile(const string &path, char **data, int *len) {
     if (access(path.c_str(), R_OK) != 0) {
-//        loge("read file %s no read permission", path.c_str());
+        loge("read file %s no read permission", path.c_str());
         return false;
     }
+    logi("ttttt 1");
     std::ifstream ifs(path, std::ios::binary);
+    logi("ttttt 2");
     if (!ifs.is_open()) {
-//        loge("read file %s open failed", path.c_str());
+        loge("read file %s open failed", path.c_str());
         return false;
     }
+    logi("ttttt 3");
     ifs.seekg(0, ifs.end);
     auto fos = ifs.tellg();
     ifs.seekg(0, ifs.beg);

@@ -8,10 +8,10 @@
 using std::string;
 using std::vector;
 namespace format {
-    template<typename T>
-    std::string getTypeName() {
-        return typeid(T).name();
-    }
+//    template<typename T>
+//    std::string getTypeName() {
+//        return typeid(T).name();
+//    }
 
 #define DECLARE_Java_Format_Func(type)   string format_java_##type(JNIEnv *env, const jvalue& obj,const string& args_type)
 

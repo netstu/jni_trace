@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <android/log.h>
+#include "third/utils/log.h"
 
 #define CheckJni    if (env->ExceptionCheck()) { \
   env->ExceptionDescribe();                      \
@@ -118,4 +119,25 @@ jclass loadClass(JNIEnv *env, jobject classLoader, const char *clzName) {
     auto loadedClass = (jclass) env->CallObjectMethod(classLoader, loadClassMethod, className);
     env->DeleteLocalRef(className);
     return loadedClass;
+}
+
+jobject loadDexFromMemory(JNIEnv *env, char *dexData, int dexLen) {
+    // 创建 ByteBuffer
+    jclass byteBufferClass = env->FindClass("java/nio/ByteBuffer");
+    jmethodID allocateDirect = env->GetStaticMethodID(byteBufferClass, "allocateDirect",
+                                                      "(I)Ljava/nio/ByteBuffer;");
+    jobject byteBuffer = env->CallStaticObjectMethod(byteBufferClass, allocateDirect, dexLen);
+    void *bufferAddr = env->GetDirectBufferAddress(byteBuffer);
+    memcpy(bufferAddr, dexData, dexLen);
+    jclass classLoaderClass = env->FindClass("java/lang/ClassLoader");
+    jmethodID getSystemClassLoader = env->GetStaticMethodID(classLoaderClass,
+                                                            "getSystemClassLoader",
+                                                            "()Ljava/lang/ClassLoader;");
+    jobject systemClassLoader = env->CallStaticObjectMethod(classLoaderClass, getSystemClassLoader);
+    jclass inMemoryDexClassLoaderClass = env->FindClass("dalvik/system/InMemoryDexClassLoader");
+    jmethodID inMemoryDexClassLoaderInit = env->GetMethodID(inMemoryDexClassLoaderClass, "<init>",
+                                                            "(Ljava/nio/ByteBuffer;Ljava/lang/ClassLoader;)V");
+    jobject dexClassLoader = env->NewObject(inMemoryDexClassLoaderClass, inMemoryDexClassLoaderInit,
+                                            byteBuffer, systemClassLoader);
+    return env->NewGlobalRef(dexClassLoader);
 }
