@@ -12,6 +12,7 @@
 #include "base/when_hook.h"
 #include "base/hook.h"
 #include "global/global.h"
+
 using namespace std;
 
 void *get_start(const vector<MapsInfo> &maps, const string &name) {
@@ -48,10 +49,10 @@ bool dump_so(const string &libName, const string &save_path_dir) {
 
     ofstream ofs;
     ofs.open(xbyl::format_string("%s/%d_%p_%s",
-                           save_path_dir.c_str(),
-                           getpid(),
-                           maps.get_module_base(libName),
-                           libName.c_str()),
+                                 save_path_dir.c_str(),
+                                 getpid(),
+                                 maps.get_module_base(libName),
+                                 libName.c_str()),
              ios::out | ios::binary);
     if (!ofs.is_open()) {
         LOGI("dump_so open write file error!");
@@ -110,7 +111,7 @@ bool dump_so_when_init(const string &targetLibName) {
                           });
 }
 
-bool dump_so_delay(const string &targetLibName, int sleepTime) {
+bool dump_so_delay_after_so_load(const string &targetLibName, int sleepTime) {
     return WhenSoInitHook(targetLibName,
                           [=](const string &path, void *addr, const string &funcType) {
                               logi("dump_so_delay on callback");
@@ -121,6 +122,16 @@ bool dump_so_delay(const string &targetLibName, int sleepTime) {
                               });
                               thd->join();
                           });
+}
+
+bool dump_so_delay(const string &targetLibName, int sleepTime) {
+    auto *thd = new thread([&]() {
+        sleep(sleepTime);
+        dump_so(targetLibName,
+                "/data/data/" + getPkgName());
+    });
+    thd->join();
+    return true;
 }
 
 

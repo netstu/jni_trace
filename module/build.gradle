@@ -9,11 +9,12 @@ android {
     compileSdk 34
     ndkVersion '25.2.9519653'
     defaultConfig {
-        minSdk 27
+        minSdk 21
         targetSdk 35
         externalNativeBuild {
             cmake {
                 cppFlags '-std=c++20'
+                arguments '-DANDROID_STL=none'
             }
         }
         ndk {
@@ -38,8 +39,8 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.10.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation libs.androidx.constraintlayout.v201
+    implementation libs.androidx.appcompat.v161
+    implementation libs.androidx.constraintlayout
+    implementation(libs.cxx)
 }

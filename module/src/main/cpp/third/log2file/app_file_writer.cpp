@@ -2,12 +2,14 @@
 
 app_file_writer logWriter;
 
+string getPkgName();
+
 string get_extern_data_path() {
-    return "/sdcard/Android/data/" + get_packet_name();
+    return "/sdcard/Android/data/" + getPkgName();
 }
 
 string get_data_path() {
-    return "/data/data/" + get_packet_name();
+    return "/data/data/" + getPkgName();
 }
 
 void log2file(const string &log) {

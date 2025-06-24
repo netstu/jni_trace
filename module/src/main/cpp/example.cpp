@@ -6,7 +6,9 @@
 
 #include "third/utils/utils.h"
 #include "third/utils/log.h"
-
+#include "global/global.h"
+#include "base/when_hook.h"
+#include "dump_so.h"
 #include "zygisk.hpp"
 
 using zygisk::Api;
@@ -37,6 +39,7 @@ public:
         const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
         this->process = process;
         env->ReleaseStringUTFChars(args->nice_name, process);
+        setPkgName(process);
     }
 
     void postAppSpecialize(const AppSpecializeArgs *args) {
@@ -45,26 +48,31 @@ public:
             return;
         }
         logi("inject!");
-        char *data = nullptr;
-        int len;
-        if (!ReadFile("/data/frida_helper.dex", &data, &len)) {
-            logi("load dex error: %d", errno);
-            return;
-        }
-        logi("will load dex");
-        auto classLoader = loadDexFromMemory(env, data, len);
-        if (classLoader == nullptr) {
-            logi("load dex error!");
-            return;
-        }
-        jclass frida_helper = loadClass(env, classLoader, "com.frida.frida_helper");
-        if (frida_helper == nullptr) {
-            logi("frida_helper is null!");
-            return;
-        }
-        logi("will init jni trace");
-        init(env, frida_helper);
-        logi("finish");
+
+        dump_so_delay("libshield.so", 30);
+        dump_so_delay("libreveny.so", 30);
+
+
+//        char *data = nullptr;
+//        int len;
+//        if (!ReadFile("/data/frida_helper.dex", &data, &len)) {
+//            logi("load dex error: %d", errno);
+//            return;
+//        }
+//        logi("will load dex");
+//        auto classLoader = loadDexFromMemory(env, data, len);
+//        if (classLoader == nullptr) {
+//            logi("load dex error!");
+//            return;
+//        }
+//        jclass frida_helper = loadClass(env, classLoader, "com.frida.frida_helper");
+//        if (frida_helper == nullptr) {
+//            logi("frida_helper is null!");
+//            return;
+//        }
+//        logi("will init jni trace");
+//        init(env, frida_helper);
+//        logi("finish");
     }
 
 private:
