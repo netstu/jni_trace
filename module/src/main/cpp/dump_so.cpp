@@ -3,7 +3,6 @@
 #include <vector>
 #include <fstream>
 #include <thread>
-#include <regex>
 #include "third/utils/linux_helper.h"
 #include "third/utils/jni_helper.hpp"
 #include "third/utils/log.h"
@@ -16,10 +15,8 @@ using namespace std;
 
 void *get_start(const vector<MapsInfo> &maps, const string &name) {
     void *start = (void *) -1;
-    regex regLibPath(name);
     for (const auto &item: maps) {
-//        LOGI("%s %d", item.path.c_str(), regex_search(item.path, regLibPath));
-        if (!regex_search(item.path, regLibPath)) {
+        if (item.path.find(name) == string::npos) {
             continue;
         }
         if ((uint64_t) start > (uint64_t) item.region_start) {

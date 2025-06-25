@@ -8,11 +8,9 @@
 #include <vector>
 #include <sys/stat.h>
 #include <stack>
-#include <regex>
 
 #include "log.h"
 #include "linux_helper.h"
-#include "string_match.h"
 
 using namespace std;
 
@@ -471,10 +469,9 @@ void *MapsHelper::get_module_end_reg(const string &libPath) {
 }
 
 void *MapsHelper::get_module_end(const string &libPath, bool is_reg) {
-    StringMatch match(libPath, is_reg);
     void *start = nullptr;
     for (const auto &item: mapsInfo) {
-        if (!match.is_in(item.path)) {
+        if (item.path.find(libPath) == -1) {
             continue;
         }
         if ((uint64_t) item.region_start > (uint64_t) start) {
@@ -493,10 +490,9 @@ void *MapsHelper::get_module_base_reg(const string &libPath) {
 }
 
 void *MapsHelper::get_module_base(const string &libPath, bool is_reg) {
-    StringMatch match(libPath, is_reg);
     void *start = (void *) -1;
     for (const auto &item: mapsInfo) {
-        if (!match.is_in(item.path)) {
+        if (item.path.find(libPath) == -1) {
             continue;
         }
         if ((uint64_t) item.region_start < (uint64_t) start) {
@@ -508,7 +504,6 @@ void *MapsHelper::get_module_base(const string &libPath, bool is_reg) {
 
 bool MapsHelper::get_process_maps(bool is_reg, const string &libPath, const string &wantPerm) {
     mapsInfo.clear();
-    StringMatch match(libPath, is_reg);
 
     FILE *fp = fopen("/proc/self/maps", "r");
     if (fp == nullptr) {
@@ -563,8 +558,7 @@ bool MapsHelper::get_process_maps(bool is_reg, const string &libPath, const stri
         if (path.ends_with("\n")) {
             path.pop_back();
         }
-//        LOGI("%s %d", path.c_str(), regex_search(path, regLibPath));
-        if ((!libPath.empty() && !match.is_in(path)) ||
+        if ((!libPath.empty() && path.find(libPath) == -1) ||
             (!wantPerm.empty() && wantPerm != permissions)) {
             continue;
         }

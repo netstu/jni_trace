@@ -1,22 +1,19 @@
 #include <fcntl.h>
 #include <unistd.h>
-#include <sstream>
 #include <iomanip>
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
 #include <mutex>
-#include <fstream>
-#include <string.h>
+#include <cstring>
 #include <sys/time.h>
-#include <time.h>
+#include <ctime>
 #include <dlfcn.h>
 
 #include "utils.h"
 #include "linux_helper.h"
 #include "log.h"
 
-using std::stringstream;
 
 string get_packet_name() {
     string cmdLine = GetCmdLine(getpid());
@@ -63,16 +60,14 @@ string time_to_string(int64_t tick) {
     localtime_r((time_t *) &tick, &tm);
 #endif
 
-    std::stringstream stm;
-    stm << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
-    return stm.str();
+    char buffer[32];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
+    return string(buffer);
 }
 
 int64_t string_to_time(const string &time_str, const string &fmt = "%Y-%m-%d %H:%M:%S") {
     tm tm{};
-    std::stringstream stm;
-    stm << time_str;
-    stm >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+    strptime(time_str.c_str(), fmt.c_str(), &tm);
     return mktime(&tm);
 }
 
@@ -296,18 +291,22 @@ bool ReadFile(const string &path, char **data, int *len) {
 
 string ReadFile(const string &path) {
     if (access(path.c_str(), R_OK) != 0) {
-//        loge("read file %s no read permission", path.c_str());
         return "";
     }
-    std::ifstream ifs(path);
-    if (!ifs.is_open()) {
-//        loge("read file %s open failed", path.c_str());
+    FILE *fp = fopen(path.c_str(), "r");
+    if (!fp) {
         return "";
     }
-    stringstream buffer;
-    buffer << ifs.rdbuf();
-    ifs.close();
-    return buffer.str();
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *buffer = new char[size + 1];
+    fread(buffer, 1, size, fp);
+    buffer[size] = '\0';
+    fclose(fp);
+    string result(buffer);
+    delete[] buffer;
+    return result;
 }
 
 
