@@ -10,26 +10,6 @@ add_library(libutils
         STATIC
         ${utils_src})
 
-file(GLOB json_src
-        "json/*.h"
-        "json/*.cpp"
-        "json/*.c")
-
-add_library(libjson
-        STATIC
-        ${json_src})
-
-
-#add_library(
-#        libcxx
-#        SHARED
-#        IMPORTED
-#)
-
-#set_target_properties(libcxx
-#        PROPERTIES IMPORTED_LOCATION
-#        ${LINK_DIR}/libcxx.a)
-
 set(DobbyHome "./dobby")
 #set(GENERATE_SHARED OFF)
 #set(DOBBY_DEBUG OFF)

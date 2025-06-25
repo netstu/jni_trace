@@ -7,7 +7,7 @@ apply from: "./make_plug.gradle"
 android {
     namespace 'com.jni_trace'
     compileSdk 34
-    ndkVersion '25.2.9519653'
+    ndkVersion '27.0.12077973'
     defaultConfig {
         minSdk 21
         targetSdk 35
@@ -29,6 +29,9 @@ android {
             version "3.28.0+"
         }
     }
+    buildFeatures {
+        prefab true
+    }
     tasks.configureEach { task ->
         if (task.name == 'assembleDebug' || task.name == 'assembleRelease') {
             task.doLast {
@@ -39,8 +42,5 @@ android {
 }
 
 dependencies {
-    implementation libs.androidx.constraintlayout.v201
-    implementation libs.androidx.appcompat.v161
-    implementation libs.androidx.constraintlayout
     implementation(libs.cxx)
 }

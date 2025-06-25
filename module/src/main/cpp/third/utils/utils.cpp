@@ -76,15 +76,15 @@ int64_t string_to_time(const string &time_str, const string &fmt = "%Y-%m-%d %H:
     return mktime(&tm);
 }
 
-bool WritFile(const string &path, const char *buf, int len) {
-    std::fstream file(path.c_str(), std::ios::out | std::ios::binary);
-    if (!file.is_open()) {
+bool WritFile(const char *path, const char *buf, int len) {
+    FILE *file = fopen(path, "wb");
+    if (!file) {
         return false;
     }
-    file.write(buf, len);
-    file.flush();
-    file.close();
-    return true;
+    size_t written = fwrite(buf, 1, len, file);
+    fflush(file);
+    fclose(file);
+    return written == len;
 }
 
 char *hex2str(const char *hex, int hex_len, char *str, int buf_len) {
@@ -273,23 +273,22 @@ string to_upper(const string &str) {
     return cp;
 }
 
-
 bool ReadFile(const string &path, char **data, int *len) {
     if (access(path.c_str(), R_OK) != 0) {
         loge("read file %s no read permission", path.c_str());
         return false;
     }
-    std::ifstream ifs(path, std::ios::binary);
-    if (!ifs.is_open()) {
+    FILE *fp = fopen(path.c_str(), "rb");
+    if (!fp) {
         loge("read file %s open failed", path.c_str());
         return false;
     }
-    ifs.seekg(0, ifs.end);
-    auto fos = ifs.tellg();
-    ifs.seekg(0, ifs.beg);
+    fseek(fp, 0, SEEK_END);
+    long fos = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
     char *buff = new char[fos];
-    ifs.read(buff, fos);
-    ifs.close();
+    fread(buff, 1, fos, fp);
+    fclose(fp);
     *data = buff;
     *len = fos;
     return true;

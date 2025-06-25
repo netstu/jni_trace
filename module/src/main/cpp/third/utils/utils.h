@@ -84,7 +84,7 @@ string time_to_string(int64_t tick);
 
 int64_t string_to_time(const string &time_str, const string &fmt);
 
-bool WritFile(const string &path, const char *buf, int len);
+bool WritFile(const char *path, const char *buf, int len);
 
 int gen_number(int min, int max);
 

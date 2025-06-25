@@ -7,7 +7,6 @@
 #include "third/utils/linux_helper.h"
 #include "third/utils/jni_helper.hpp"
 #include "third/utils/log.h"
-#include "third/json/json.h"
 #include "third/dobby/include/dobby.h"
 #include "base/when_hook.h"
 #include "base/hook.h"
@@ -47,14 +46,15 @@ bool dump_so(const string &libName, const string &save_path_dir) {
         return false;
     }
 
-    ofstream ofs;
-    ofs.open(xbyl::format_string("%s/%d_%p_%s",
-                                 save_path_dir.c_str(),
-                                 getpid(),
-                                 maps.get_module_base(libName),
-                                 libName.c_str()),
-             ios::out | ios::binary);
-    if (!ofs.is_open()) {
+    char filename[256];
+    snprintf(filename, sizeof(filename), "%s/%d_%p_%s",
+             save_path_dir.c_str(),
+             getpid(),
+             maps.get_module_base(libName),
+             libName.c_str());
+
+    FILE *fp = fopen(filename, "wb");
+    if (!fp) {
         LOGI("dump_so open write file error!");
         return false;
     }
@@ -63,15 +63,16 @@ bool dump_so(const string &libName, const string &save_path_dir) {
         LOGI("dump_so write offset: %p, start: %p, end: %p, perm: %s, path: %s", item.region_offset,
              item.region_start, item.region_end, item.permissions.c_str(), item.path.c_str());
 
-        ofs.seekp((uint64_t) item.region_offset);
-        ofs.write((char *) item.region_start,
-                  (uint64_t) item.region_end - (uint64_t) item.region_start);
+        fseek(fp, (long) item.region_offset, SEEK_SET);
+        fwrite((char *) item.region_start, 1,
+               (size_t)((uint64_t) item.region_end - (uint64_t) item.region_start), fp);
     }
 
-    ofs.close();
+    fclose(fp);
 
     return true;
 }
+
 
 static bool hadDump = false;
 
@@ -137,7 +138,7 @@ bool dump_so_delay(const string &targetLibName, int sleepTime) {
 
 static string gDumpSoName;
 
-DefineHookStub(JNI_OnLoad, jint, JavaVM *vm, void *reserved) {
+DefineHookStub(JNI_OnLoad, jint, JavaVM * vm, void *reserved) {
     auto ret = pHook_JNI_OnLoad(vm, reserved);
     dump_so(gDumpSoName, "/data/data/" + getPkgName());
     return ret;

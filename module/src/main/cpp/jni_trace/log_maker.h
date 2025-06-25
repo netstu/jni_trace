@@ -1,4 +1,3 @@
-#include "../third/json/json.h"
 #include "hook.h"
 #include "art_method_name.h"
 
@@ -90,28 +89,22 @@ public:
         if (passMethod) {
             return;
         }
-        Json::Value json;
-        json["tid"] = gettid();
-        json["name"] = name;
+        string logs;
+        logs += xbyl::format_string("tid: %d, %s ", gettid(), name.c_str());
         if (!method_pretty_name.empty()) {
-            json["invoke"] = method_pretty_name;
+            logs += xbyl::format_string("invoke %s ", method_pretty_name.c_str());
         }
         for (int i = 0; i < args_type.size(); ++i) {
-            Json::Value item;
-            item["type"] = args_type[i].c_str();
-            item["value"] = argsSerialize[i].c_str();
-            json["args"].append(item);
+            logs += xbyl::format_string("t: %s, v: %s , ", args_type[i].c_str(),
+                                        argsSerialize[i].c_str());
         }
         if (!retSerialize.empty()) {
-            Json::Value item;
-            item["type"] = retType.c_str();
-            item["value"] = retSerialize.c_str();
-            json["return"] = item;
+            logs += xbyl::format_string("r: %s:%s , ", retType.c_str(), retSerialize.c_str());
         }
         for (const auto &item: stack) {
-            json["stack"].append(xbyl::format_string("%s:%p,", item.name.c_str(), item.offset));
+            logs += xbyl::format_string("%s:%p, ", item.name.c_str(), item.offset);
         }
-        log2file("%s", Json2String(json).c_str());
+        log2file("%s", logs.c_str());
     }
 
     bool parseMethod(jmethodID method) {

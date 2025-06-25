@@ -1,8 +1,10 @@
 #pragma once
 
-#include <fstream>
-#include <string>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "../utils/jni_helper.hpp"
 #include "../utils/log.h"
@@ -25,14 +27,11 @@ public:
         if (file == nullptr) {
             return;
         }
-        if (file->is_open()) {
-            file->close();
-        }
-        delete (file);
+        fclose(file);
     }
 
     bool is_open() {
-        return file != nullptr && file->is_open();
+        return file != nullptr;
     }
 
     bool open(const string &dataPath, const string &name) {
@@ -44,25 +43,25 @@ public:
         this->fileName = name;
         this->myPid = getpid();
         file = open_file(dataPath, name);
-        return file->is_open();
+        return file != nullptr;
     }
 
     void write2file(const char *data, int len) {
         lock_guard<mutex> guard(fileLock);
         check_process();
-        if (len > 0 && file->is_open()) {
-            file->write(data, len);
-            file->flush();
+        if (len > 0 && file != nullptr) {
+            fwrite(data, 1, len, file);
+            fflush(file);
         }
     }
 
     void write2file(const string &data) {
         lock_guard<mutex> guard(fileLock);
         check_process();
-        if (data.size() > 0 && file->is_open()) {
-            file->write(data.c_str(), data.size());
-            file->write("\n", 1);
-            file->flush();
+        if (data.size() > 0 && file != nullptr) {
+            fwrite(data.c_str(), 1, data.size(), file);
+            fwrite("\n", 1, 1, file);
+            fflush(file);
         }
     }
 
@@ -70,7 +69,7 @@ private:
     int myPid{};
     string appDataPath;
     string fileName;
-    fstream *file{};
+    FILE *file{};
     mutex fileLock;
 
     void check_process() {
@@ -83,18 +82,15 @@ private:
     }
 
 public:
-    static fstream *open_file(const string &appDataPath, const string &name) {
+    static FILE *open_file(const string &appDataPath, const string &name) {
         srandom(::time(nullptr) + getpid());
-        auto file = new fstream();
-        string path = xbyl::format_string(appDataPath + "/%s_%d_%d", name.c_str(), getpid(),
-                                    random());
-        file->open(path, ios::out | ios::binary);
-        if (!file->is_open()) {
-            LOGI("analyse open log file %s error: %d", path.c_str(), errno);
-            return file;
+        char path[256];
+        snprintf(path, sizeof(path), "%s/%s_%d_%ld", appDataPath.c_str(), name.c_str(), getpid(), random());
+        FILE *file = fopen(path, "wb");
+        if (!file) {
+            LOGI("analyse open log file %s error: %d", path, errno);
+            return nullptr;
         }
         return file;
     }
 };
-
-
