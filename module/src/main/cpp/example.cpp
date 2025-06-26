@@ -2,17 +2,20 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>
+#include <thread>
 #include <android/log.h>
 
 #include "third/utils/utils.h"
 #include "third/utils/log.h"
 #include "third/byopen/hack_dlopen.h"
 #include "third/dobby/include/dobby.h"
+#include "third/utils/linux_helper.h"
 #include "global/global.h"
 #include "base/when_hook.h"
 #include "dump_so.h"
 #include "zygisk.hpp"
 
+using namespace std;
 using zygisk::Api;
 using zygisk::AppSpecializeArgs;
 using zygisk::ServerSpecializeArgs;
@@ -87,6 +90,23 @@ public:
         logi("inject!");
         dump_so_delay("libshield.so", 15);
         dump_so_delay("libreveny.so", 0);
+        (new thread([=]() {
+            MapsHelper maps;
+            if (maps.refresh("memfd:") == 0) {
+                LOGI("dump_so open maps error!");
+                return;
+            }
+            for (auto item: maps.mapsInfo) {
+                if (item.path.find("/memfd:") != string::npos &&
+                    item.path.find("jit-zygote-cache") == string::npos &&
+                    item.path.find("jit-cache") == string::npos) {
+                    logi("find mem so: %s", item.path.c_str());
+                    dump_so(item.path.substr(item.path.find(":") + 1).substr(0, 8),
+                            "/data/data/" + getPkgName());
+                }
+            }
+        }))->detach();
+
         WhenSoInitHook("libshield.so",
                        [](const string &path, void *addr, const string &funcType) {
                            logi("on shield load");

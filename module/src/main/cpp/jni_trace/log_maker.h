@@ -95,14 +95,14 @@ public:
             logs += xbyl::format_string("invoke %s\t", method_pretty_name.c_str());
         }
         for (int i = 0; i < args_type.size(); ++i) {
-            logs += xbyl::format_string("t: %s, v: %s,\t", args_type[i].c_str(),
+            logs += xbyl::format_string("t: %s, v: %s, ", args_type[i].c_str(),
                                         argsSerialize[i].c_str());
         }
         if (!retSerialize.empty()) {
             logs += xbyl::format_string("r: %s:%s,\t", retType.c_str(), retSerialize.c_str());
         }
         for (const auto &item: stack) {
-            logs += xbyl::format_string("%s:%p,\t", item.name.c_str(), item.offset);
+            logs += xbyl::format_string("%s:%p, ", item.name.c_str(), item.offset);
         }
         log2file("%s", logs.c_str());
     }
