@@ -30,10 +30,9 @@ loop:
     b loop
 
 done:
+    mov x0, x20
     ldp x21, x22, [sp], 0x10
     ldp x19, x20, [sp], 0x10
     ldp x29, x30, [sp], 0x10
-    mov x0, x20
     ret
-
 .end
