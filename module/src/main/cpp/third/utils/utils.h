@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <functional>
+#include <dlfcn.h>
+
 
 using std::string;
 using std::mutex;
@@ -145,14 +147,13 @@ bool check_memory_readable(void *addr);
 
 void gen_hex(int len, char *result);
 
+string get_packet_name();
+
+
 struct Stack {
-    string name;
+    std::string name;
     void *offset;
 };
-
-vector<Stack> GetStackInfo(int num, ...);
-
-string get_packet_name();
 
 //max 10
 extern "C" int get_call_stack(void *p);
@@ -161,4 +162,24 @@ bool check_mem(void *p);
 
 extern "C" bool check_stack(void *p);
 
-inline vector<Stack> GetStackInfo() __attribute__((always_inline));
+extern inline std::vector<Stack> GetStackInfo() __attribute__((always_inline)) {
+    std::vector<Stack> frame;
+    void *p[10];
+    int count = get_call_stack(p);
+    for (int i = 0; i < count; i++) {
+        Dl_info info{};
+        void *addr = p[i];
+        if (dladdr(addr, &info) != 0) {
+            frame.push_back({
+                                    info.dli_fname,
+                                    (void *) ((uint64_t) addr - (uint64_t) info.dli_fbase)
+                            });
+        } else {
+            frame.push_back({
+                                    "unknow",
+                                    (void *) ((uint64_t) addr - (uint64_t) info.dli_fbase)
+                            });
+        }
+    }
+    return frame;
+}

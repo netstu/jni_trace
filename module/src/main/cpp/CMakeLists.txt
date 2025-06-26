@@ -22,7 +22,7 @@ file(GLOB analyse_src
 
         "jni_trace/*.cpp"
         "jni_trace/*.h"
-        )
+)
 
 add_library(
         analyse

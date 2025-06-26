@@ -9,6 +9,7 @@
 #include "../third/byopen/hack_dlopen.h"
 #include "../third/utils/utils.h"
 #include "../third/log2file/app_file_writer.h"
+#include "../stack/stack.h"
 
 using std::regex;
 using std::shared_ptr;

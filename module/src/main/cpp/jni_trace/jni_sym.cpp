@@ -261,12 +261,9 @@ bool jni_sym::init(fake_dlctx_ref_t handleLibArt, JNIEnv *env) {
 //    }
 
     for (int i = 0; i < jniHooks.size(); ++i) {
-        auto stack = GetStackInfo(1, jniHooks[i].target);
         logi("hook info: %s, %p, %p , %s",
              jniHooks[i].sym.c_str(),
-             jniHooks[i].target,
-             stack[0].offset,
-             stack[0].name.c_str());
+             jniHooks[i].target);
     }
     return true;
 }
