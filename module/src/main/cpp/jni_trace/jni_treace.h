@@ -113,12 +113,12 @@ extern __thread bool passCallMethod;
 //#define RegisterNativesStack GetStack0
 //#define StringStack GetStack0
 
-#define MethodStack GetStack01
-#define ArrayStack GetStack01
-#define FieldStack GetStack01
-#define RegisterNativesStack GetStack01
-#define StringStack GetStack01
-#define ClassStack GetStack01
+#define MethodStack GetStackInfo
+#define ArrayStack GetStackInfo
+#define FieldStack GetStackInfo
+#define RegisterNativesStack GetStackInfo
+#define StringStack GetStackInfo
+#define ClassStack GetStackInfo
 
 #define DefineHookStubCheckThreadPassJniTrace_Field(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(FieldStack, Func, Ret,  __VA_ARGS__)
 #define DefineHookStubCheckThreadPassJniTrace_Array(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(ArrayStack, Func, Ret,  __VA_ARGS__)

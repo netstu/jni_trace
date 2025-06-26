@@ -141,6 +141,7 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper) {
                                   {"com.google.android.trichrome"},
                                   {"libwebviewchromium_loader.so"},
                                   {"libconscrypt_gmscore_jni.so"},
+                                  {"libzygisk.so"},
                           }) == -1 ? 1 : -1;
                       },
                       passJavaMethod);

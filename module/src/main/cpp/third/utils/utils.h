@@ -153,3 +153,12 @@ struct Stack {
 vector<Stack> GetStackInfo(int num, ...);
 
 string get_packet_name();
+
+//max 10
+extern "C" int get_call_stack(void *p);
+
+bool check_mem(void *p);
+
+extern "C" bool check_stack(void *p);
+
+inline vector<Stack> GetStackInfo() __attribute__((always_inline));

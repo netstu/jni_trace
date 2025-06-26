@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <ctime>
 #include <dlfcn.h>
+#include <sys/mman.h>
 
 #include "utils.h"
 #include "linux_helper.h"
@@ -355,7 +356,7 @@ void StringAppendV(std::string *dst, const char *format, va_list ap) {
 }
 
 
-namespace xbyl{
+namespace xbyl {
     std::string format_string(const char *fmt, va_list ap) {
         std::string result;
         StringAppendV(&result, fmt, ap);
@@ -521,5 +522,49 @@ vector<Stack> GetStackInfo(int num, ...) {
         }
     }
     va_end(args);
+    return frame;
+}
+
+bool check_mem(void *p) {
+    int pageSize = getpagesize();
+    unsigned char vec = 0;
+    uint64_t start = ((uint64_t) p) & (~(pageSize - 1));
+    int result = mincore((void *) start, pageSize, &vec);
+    LOGI("check--- %p %d %d", p, result, vec);
+    return result == 0 && vec == 1;
+}
+
+extern "C" bool check_stack(void *p) {
+    if (!check_mem(p)) {
+        return false;
+    }
+    if (!check_mem((void *) (((uint64_t) p) + 8))) {
+        return false;
+    }
+    if (!check_mem((void *) *((uint64_t *) (((uint64_t) p) + 8)))) {
+        return false;
+    }
+    return true;
+}
+
+inline vector<Stack> GetStackInfo() __attribute__((always_inline)) {
+    vector<Stack> frame;
+    void *p[10];
+    int count = get_call_stack(p);
+    for (int i = 0; i < count; i++) {
+        Dl_info info{};
+        void *addr = p[i];
+        if (dladdr(addr, &info) != 0) {
+            frame.push_back({
+                                    info.dli_fname,
+                                    (void *) ((uint64_t) addr - (uint64_t) info.dli_fbase)
+                            });
+        } else {
+            frame.push_back({
+                                    "unknow",
+                                    (void *) ((uint64_t) addr - (uint64_t) info.dli_fbase)
+                            });
+        }
+    }
     return frame;
 }

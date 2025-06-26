@@ -60,7 +60,6 @@ bool hookAll(vector<SymbolInfo> *symbols);
 #define ExternHookStub(Func, Ret, ...)  ExternHookRawOrgFunc(Func, Ret, ##__VA_ARGS__) \
     DefineHookStubFunc(Func, Ret, ##__VA_ARGS__);
 
-#define GetStack(x) __builtin_return_address(x)
 
 #define InlineHookAddr(Base, Addr, Func) DobbyHook((char *)Base + Addr, (dobby_dummy_func_t) & Hook_##Func, (dobby_dummy_func_t *)&pHook_##Func)
 
@@ -72,9 +71,6 @@ bool hookAll(vector<SymbolInfo> *symbols);
 #define GetStack01()        GetStackInfo(2, __builtin_return_address(0), \
                                         __builtin_return_address(1))
 
-#define GetStack3()        GetStackInfo(3, __builtin_return_address(0), \
-                                        __builtin_return_address(1), \
-                                        __builtin_return_address(2))
 
 extern void
 _HookLogWitchLibWithStack(const string &libName, const string &funcName, void *ret, const char *fmt,
