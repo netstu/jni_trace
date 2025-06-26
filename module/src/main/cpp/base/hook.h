@@ -9,7 +9,6 @@
 #include "../third/byopen/hack_dlopen.h"
 #include "../third/utils/utils.h"
 #include "../third/log2file/app_file_writer.h"
-#include "../stack/stack.h"
 
 using std::regex;
 using std::shared_ptr;
@@ -67,16 +66,8 @@ bool hookAll(vector<SymbolInfo> *symbols);
 #define InlineHookSymbol(LibName, FuncName, Replace)       DobbyHook(DobbySymbolResolver(LibName,#FuncName),        \
                                                             (dobby_dummy_func_t) &Replace, (dobby_dummy_func_t *)&pHook_##FuncName)
 
-#define GetStack0()        GetStackInfo(1, __builtin_return_address(0))
-#define GetStack1()        GetStackInfo(1, __builtin_return_address(1))
-#define GetStack01()        GetStackInfo(2, __builtin_return_address(0), \
-                                        __builtin_return_address(1))
-
-
 extern void
 _HookLogWitchLibWithStack(const string &libName, const string &funcName, void *ret, const char *fmt,
                           ...);
 
 extern void setLogRetOffset(void *offset);
-
-string stack2str(const vector<Stack> &stack);

@@ -162,6 +162,8 @@ bool check_mem(void *p);
 
 extern "C" bool check_stack(void *p);
 
+string stack2str(const vector<Stack> &stack);
+
 extern inline std::vector<Stack> GetStackInfo() __attribute__((always_inline)) {
     std::vector<Stack> frame;
     void *p[10];

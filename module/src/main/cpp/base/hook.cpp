@@ -98,11 +98,3 @@ bool hookAll(vector<SymbolInfo> *symbols) {
     return true;
 }
 
-
-string stack2str(const vector<Stack> &stack) {
-    string result;
-    for (const Stack &item: stack) {
-        result += xbyl::format_string("%s:%p", item.name.c_str(), item.offset);
-    }
-    return result;
-}
