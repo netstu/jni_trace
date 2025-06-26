@@ -118,7 +118,9 @@ extern __thread bool passCallMethod;
 #define FieldStack GetStack01
 #define RegisterNativesStack GetStack01
 #define StringStack GetStack01
+#define ClassStack GetStack01
 
 #define DefineHookStubCheckThreadPassJniTrace_Field(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(FieldStack, Func, Ret,  __VA_ARGS__)
 #define DefineHookStubCheckThreadPassJniTrace_Array(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(ArrayStack, Func, Ret,  __VA_ARGS__)
 #define DefineHookStubCheckThreadPassJniTrace_String(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(StringStack, Func, Ret,  __VA_ARGS__)
+#define DefineHookStubCheckThreadPassJniTrace_Class(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(StringStack, Func, Ret,  __VA_ARGS__)
