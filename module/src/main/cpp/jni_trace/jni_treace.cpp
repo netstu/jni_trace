@@ -117,32 +117,35 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper) {
         }
         jniTrace.Init((jclass) env->NewGlobalRef(frida_helper), handleLibArt,
                       [](const vector<Stack> &frame) -> int {
-                          return CheckFirstModule(frame, {
-                                  {"libandroid_runtime.so"},
-                                  {"libanalyse.so"},
-                                  {"libart.so"},
-                                  {"libjavacore.so"},
-                                  {"libnativeloader.so"},
-                                  {"libopenjdk.so"},
-                                  {"libopenjdkjvm.so"},
-                                  {"libjavacrypto.so"},
-                                  {"libicu_jni.so"},
-                                  {"libgui.so"},
-                                  {"libhwui.so"},
-                                  {"boot.oat"},
-                                  {"libnms.so"},
-                                  {"liballiance.so"},
-                                  {"libmonochrome_64.so"},
-                                  {"libframework-connectivity-tiramisu-jni.so"},
-                                  {"pcam.jar"},
-                                  {"libapminsighta.so"},
-                                  {"libmedia_jni.so"},
-                                  {"com.google.android.gms"},
-                                  {"com.google.android.trichrome"},
-                                  {"libwebviewchromium_loader.so"},
-                                  {"libconscrypt_gmscore_jni.so"},
-                                  {"libzygisk.so"},
-                          }) == -1 ? 1 : -1;
+//                          return CheckFirstModule(frame, {
+//                                  {"libandroid_runtime.so"},
+//                                  {"libanalyse.so"},
+//                                  {"libart.so"},
+//                                  {"libjavacore.so"},
+//                                  {"libnativeloader.so"},
+//                                  {"libopenjdk.so"},
+//                                  {"libopenjdkjvm.so"},
+//                                  {"libjavacrypto.so"},
+//                                  {"libicu_jni.so"},
+//                                  {"libgui.so"},
+//                                  {"libhwui.so"},
+//                                  {"boot.oat"},
+//                                  {"libnms.so"},
+//                                  {"liballiance.so"},
+//                                  {"libmonochrome_64.so"},
+//                                  {"libframework-connectivity-tiramisu-jni.so"},
+//                                  {"pcam.jar"},
+//                                  {"libapminsighta.so"},
+//                                  {"libmedia_jni.so"},
+//                                  {"com.google.android.gms"},
+//                                  {"com.google.android.trichrome"},
+//                                  {"libwebviewchromium_loader.so"},
+//                                  {"libconscrypt_gmscore_jni.so"},
+//                                  {"libzygisk.so"},
+//                          }) == -1 ? 1 : -1;
+                          return CheckAllowModule(frame, {
+                                  {"libshield.so"}
+                          });
                       },
                       passJavaMethod);
         jniTrace.Hook();

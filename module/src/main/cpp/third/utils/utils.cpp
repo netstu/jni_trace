@@ -526,11 +526,15 @@ bool check_mem(void *p) {
     unsigned char vec = 0;
     uint64_t start = ((uint64_t) p) & (~(pageSize - 1));
     int result = mincore((void *) start, pageSize, &vec);
+    LOGI("check--- %p %d %d", p, result, vec);
     return result == 0 && vec == 1;
 }
 
 extern "C" bool check_stack(void *p) {
     if (!check_mem(p)) {
+        return false;
+    }
+    if (!check_mem((void *) *((uint64_t *) p))) {
         return false;
     }
     if (!check_mem((void *) (((uint64_t) p) + 8))) {
@@ -545,7 +549,7 @@ extern "C" bool check_stack(void *p) {
 string stack2str(const vector<Stack> &stack) {
     string result;
     for (const Stack &item: stack) {
-        result += xbyl::format_string("%s:%p", item.name.c_str(), item.offset);
+        result += xbyl::format_string("%s:%p,", item.name.c_str(), item.offset);
     }
     return result;
 }
