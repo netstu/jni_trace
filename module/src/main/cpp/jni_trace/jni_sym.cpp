@@ -241,7 +241,6 @@ bool jni_sym::init(fake_dlctx_ref_t handleLibArt, JNIEnv *env) {
 //            AddSymbolInfoByJniEnv(GetStaticFieldID, env),
 //            AddSymbolInfoByJniEnv(Throw, env),
 //            AddSymbolInfoByJniEnv(ThrowNew, env),
-//            AddSymbolInfoByJniEnv(ExceptionOccurred, env),
     };
 
 //    auto names = getSynName(env);
@@ -261,7 +260,7 @@ bool jni_sym::init(fake_dlctx_ref_t handleLibArt, JNIEnv *env) {
 //    }
 
     for (int i = 0; i < jniHooks.size(); ++i) {
-        logi("hook info: %s, %p, %p , %s",
+        logi("hook info: %s, %p",
              jniHooks[i].sym.c_str(),
              jniHooks[i].target);
     }

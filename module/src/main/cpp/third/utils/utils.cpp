@@ -501,29 +501,29 @@ bool check_memory_readable(void *addr) {
     return ret > 0;
 }
 
-//vector<Stack> GetStackInfo(int num, ...) {
-//    vector<Stack> frame;
-//    va_list args;
-//    va_start(args, num);
-//    for (int i = 0; i < num; ++i) {
-//        void *addr = va_arg(args, void*);
-//        Dl_info info{};
-//
-//        if (dladdr(addr, &info) != 0) {
-//            frame.push_back({
-//                                    info.dli_fname,
-//                                    (void *) ((uint64_t) addr - (uint64_t) info.dli_fbase)
-//                            });
-//        } else {
-//            frame.push_back({
-//                                    "unknow",
-//                                    (void *) ((uint64_t) addr - (uint64_t) info.dli_fbase)
-//                            });
-//        }
-//    }
-//    va_end(args);
-//    return frame;
-//}
+vector<Stack> GetStackInfo(int num, ...) {
+    vector<Stack> frame;
+    va_list args;
+    va_start(args, num);
+    for (int i = 0; i < num; ++i) {
+        void *addr = va_arg(args, void*);
+        Dl_info info{};
+
+        if (dladdr(addr, &info) != 0) {
+            frame.push_back({
+                                    info.dli_fname,
+                                    (void *) ((uint64_t) addr - (uint64_t) info.dli_fbase)
+                            });
+        } else {
+            frame.push_back({
+                                    "unknow",
+                                    (void *) ((uint64_t) addr - (uint64_t) info.dli_fbase)
+                            });
+        }
+    }
+    va_end(args);
+    return frame;
+}
 
 bool check_mem(void *p) {
     int pageSize = getpagesize();

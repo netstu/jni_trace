@@ -149,11 +149,12 @@ void gen_hex(int len, char *result);
 
 string get_packet_name();
 
-
 struct Stack {
     std::string name;
     void *offset;
 };
+
+vector<Stack> GetStackInfo(int num, ...);
 
 //max 10
 extern "C" int get_call_stack(void *p);

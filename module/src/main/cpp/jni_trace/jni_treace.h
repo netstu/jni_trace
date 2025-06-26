@@ -107,6 +107,7 @@ extern __thread bool passCallMethod;
     }                                                                             \
     Ret logHook_##Func(const vector<Stack> &_stack, ForwardType(__VA_ARGS__))
 
+//#define GetStack0()        GetStackInfo(1, __builtin_return_address(0))
 //#define MethodStack GetStack0
 //#define ArrayStack GetStack0
 //#define FieldStack GetStack0
