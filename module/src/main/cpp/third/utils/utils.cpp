@@ -526,7 +526,6 @@ bool check_mem(void *p) {
     unsigned char vec = 0;
     uint64_t start = ((uint64_t) p) & (~(pageSize - 1));
     int result = mincore((void *) start, pageSize, &vec);
-    LOGI("check--- %p %d %d", p, result, vec);
     return result == 0 && vec == 1;
 }
 

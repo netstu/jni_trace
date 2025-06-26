@@ -143,6 +143,13 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper) {
 //                                  {"libconscrypt_gmscore_jni.so"},
 //                                  {"libzygisk.so"},
 //                          }) == -1 ? 1 : -1;
+                          for (const auto &item: frame) {
+                              if (item.name.find("/memfd:") != string::npos &&
+                                  item.name.find("jit-zygote-cache") == string::npos &&
+                                  item.name.find("jit-cache") == string::npos) {
+                                  return 1;
+                              }
+                          }
                           return CheckAllowModule(frame, {
                                   {"libshield.so"}
                           });
