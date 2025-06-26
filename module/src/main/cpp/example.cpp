@@ -6,6 +6,8 @@
 
 #include "third/utils/utils.h"
 #include "third/utils/log.h"
+#include "third/byopen/hack_dlopen.h"
+#include "third/dobby/include/dobby.h"
 #include "global/global.h"
 #include "base/when_hook.h"
 #include "dump_so.h"
@@ -28,6 +30,41 @@ jclass loadClass(JNIEnv *env, jobject classLoader, const char *clzName);
 
 jobject loadDexFromMemory(JNIEnv *env, char *dexData, int dexLen);
 
+uint64_t (*pcheck_fun2)(uint64_t some_obj);
+
+uint64_t (*pcheck_fun3)(uint64_t some_obj);
+
+uint64_t check_fun2(uint64_t some_obj) {
+    auto r = pcheck_fun2(some_obj);
+    logi("check fun2 %d", r);
+    return 0;
+}
+
+uint64_t check_fun3(uint64_t some_obj) {
+    auto r = pcheck_fun3(some_obj);
+    logi("check fun3 %d", r);
+    return 0;
+}
+
+uint64_t baseAddr;
+#define  FastStack0()  ((uint64_t)__builtin_return_address(0)-baseAddr)
+#define  FastStack1()  ((uint64_t)__builtin_return_address(1)-baseAddr)
+
+void (*plog_msg)(uint64_t *a1, int a2, uint64_t a3, uint64_t a4, const char *fmt, ...);
+
+void log_msg(uint64_t *a1, int a2, uint64_t a3, uint64_t a4, const char *fmt, ...) {
+    va_list args;
+    va_list cargs;
+    va_start(args, fmt);
+    va_copy(cargs, args);
+    string logs = xbyl::format_string(fmt, cargs);
+    if (logs.find("Terminating application due to detection") != -1) {
+        logi("log msg: %s %p,%p", logs.c_str(), FastStack0(), FastStack1());
+    } else {
+        logi("log msg: %s %p", logs.c_str(), FastStack0());
+    }
+}
+
 class MyModule : public zygisk::ModuleBase {
 public:
     void onLoad(Api *api, JNIEnv *env) override {
@@ -48,31 +85,49 @@ public:
             return;
         }
         logi("inject!");
+        dump_so_delay("libshield.so", 15);
+        dump_so_delay("libreveny.so", 0);
+        WhenSoInitHook("libshield.so",
+                       [](const string &path, void *addr, const string &funcType) {
+                           logi("on shield load");
+                           void *unused;
+                           module_info_t info;
+                           hack_get_module_info("libshield.so", &info);
+                           baseAddr = (uint64_t) info.module_address;
 
-        dump_so_delay("libshield.so", 30);
-        dump_so_delay("libreveny.so", 30);
+                           DobbyHook((void *) (baseAddr + 0x0528CB0),
+                                     (dobby_dummy_func_t) log_msg,
+                                     (dobby_dummy_func_t *) &plog_msg);
 
+                           DobbyHook((void *) (baseAddr + 0x040E77C),
+                                     (dobby_dummy_func_t) check_fun2,
+                                     (dobby_dummy_func_t *) &pcheck_fun2);
 
-//        char *data = nullptr;
-//        int len;
-//        if (!ReadFile("/data/frida_helper.dex", &data, &len)) {
-//            logi("load dex error: %d", errno);
-//            return;
-//        }
-//        logi("will load dex");
-//        auto classLoader = loadDexFromMemory(env, data, len);
-//        if (classLoader == nullptr) {
-//            logi("load dex error!");
-//            return;
-//        }
-//        jclass frida_helper = loadClass(env, classLoader, "com.frida.frida_helper");
-//        if (frida_helper == nullptr) {
-//            logi("frida_helper is null!");
-//            return;
-//        }
-//        logi("will init jni trace");
-//        init(env, frida_helper);
-//        logi("finish");
+                           DobbyHook((void *) (baseAddr + 0x426138),
+                                     (dobby_dummy_func_t) check_fun3,
+                                     (dobby_dummy_func_t *) &pcheck_fun3);
+                       });
+
+        char *data = nullptr;
+        int len;
+        if (!ReadFile("/data/frida_helper.dex", &data, &len)) {
+            logi("load dex error: %d", errno);
+            return;
+        }
+        logi("will load dex");
+        auto classLoader = loadDexFromMemory(env, data, len);
+        if (classLoader == nullptr) {
+            logi("load dex error!");
+            return;
+        }
+        jclass frida_helper = loadClass(env, classLoader, "com.frida.frida_helper");
+        if (frida_helper == nullptr) {
+            logi("frida_helper is null!");
+            return;
+        }
+        logi("will init jni trace");
+        init(env, frida_helper);
+        logi("finish");
     }
 
 private:

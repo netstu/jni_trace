@@ -74,7 +74,6 @@ extern JniTrace jniTrace;
 extern __thread bool passJniTrace;
 extern __thread bool passCallMethod;
 
-
 #define ForwardArgs7(type, value)  value
 #define ForwardArgs6(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs7(__VA_ARGS__))
 #define ForwardArgs5(type, value, ...)  value __VA_OPT__(,) __VA_OPT__(ForwardArgs6(__VA_ARGS__))
@@ -108,6 +107,18 @@ extern __thread bool passCallMethod;
     }                                                                             \
     Ret logHook_##Func(const vector<Stack> &_stack, ForwardType(__VA_ARGS__))
 
+//#define MethodStack GetStack0
+//#define ArrayStack GetStack0
+//#define FieldStack GetStack0
+//#define RegisterNativesStack GetStack0
+//#define StringStack GetStack0
 
-#define DefineHookStubCheckThreadPassJniTrace_Stack0(Func, Ret, ...) DefineHookStubCheckThreadPassJniTrace(GetStack0, Func, Ret,  __VA_ARGS__)
-#define DefineHookStubCheckThreadPassJniTrace_Stack01(Func, Ret, ...) DefineHookStubCheckThreadPassJniTrace(GetStack01, Func, Ret, __VA_ARGS__)
+#define MethodStack GetStack01
+#define ArrayStack GetStack01
+#define FieldStack GetStack01
+#define RegisterNativesStack GetStack01
+#define StringStack GetStack01
+
+#define DefineHookStubCheckThreadPassJniTrace_Field(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(FieldStack, Func, Ret,  __VA_ARGS__)
+#define DefineHookStubCheckThreadPassJniTrace_Array(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(ArrayStack, Func, Ret,  __VA_ARGS__)
+#define DefineHookStubCheckThreadPassJniTrace_String(Func, Ret, ...)  DefineHookStubCheckThreadPassJniTrace(StringStack, Func, Ret,  __VA_ARGS__)

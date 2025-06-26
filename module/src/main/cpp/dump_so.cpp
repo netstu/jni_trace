@@ -123,15 +123,14 @@ bool dump_so_delay_after_so_load(const string &targetLibName, int sleepTime) {
 }
 
 bool dump_so_delay(const string &targetLibName, int sleepTime) {
-    auto *thd = new thread([&]() {
+    logi("dump_so_delay on callback");
+    (new thread([=]() {
         sleep(sleepTime);
         dump_so(targetLibName,
                 "/data/data/" + getPkgName());
-    });
-    thd->join();
+    }))->detach();
     return true;
 }
-
 
 static string gDumpSoName;
 
