@@ -6,3 +6,4 @@ JNIEXPORT jboolean JNICALL init(JNIEnv *env, jclass frida_helper)函数中配置
 疯狂星期四 v我50 
 我是秦始皇 v我50封你为大牛马
 
+哦对了 需要一个frida_helper.dex 在我另一个项目里面 android_analysis 编译安装给root就写到对应目录了
