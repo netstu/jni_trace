@@ -13,8 +13,6 @@
 
 #include "utils.h"
 #include "linux_helper.h"
-#include "log.h"
-
 
 string get_packet_name() {
     string cmdLine = GetCmdLine(getpid());
@@ -271,12 +269,10 @@ string to_upper(const string &str) {
 
 bool ReadFile(const string &path, char **data, int *len) {
     if (access(path.c_str(), R_OK) != 0) {
-        loge("read file %s no read permission", path.c_str());
         return false;
     }
     FILE *fp = fopen(path.c_str(), "rb");
     if (!fp) {
-        loge("read file %s open failed", path.c_str());
         return false;
     }
     fseek(fp, 0, SEEK_END);
