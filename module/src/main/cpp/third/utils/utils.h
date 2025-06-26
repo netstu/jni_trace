@@ -174,12 +174,9 @@ extern inline std::vector<Stack> GetStackInfo() __attribute__((always_inline)) {
     std::vector<Stack> frame;
     void *p[10] = {0};
     int count = get_call_stack(p);
-    LOGI("stack count %d", count);
     for (int i = 0; i < count; i++) {
         Dl_info info{};
-        LOGI("stack idx %d", i);
         void *addr = p[i];
-        LOGI("stack addr %p", addr);
         if (dladdr(addr, &info) != 0) {
             frame.push_back({
                                     info.dli_fname,
